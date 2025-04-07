@@ -1,6 +1,6 @@
 # User and Group Management API Service
 
-A RESTful API service built with Node.js, Express.js, and MySQL for managing users and groups. 
+A RESTful API service built with Node.js, Express.js, and MySQL for managing users and groups.<br>
 This implementation uses raw SQL queries via the `mysql2` library (without ORM) and includes features like input validation using `Joi` for request bodies, query parameters and pagination for listing users (`GET /api/v1/users`) and groups (`GET /api/v1/groups`), and integration tests of API endpoints using `jest` and `axios`.
 
 ## Getting Started
@@ -132,7 +132,7 @@ There is no authentication because **not implemented**. All endpoints are open.
 
 > | Parameter | Required | Data Type | Description        |
 > |-----------|----------|-----------|--------------------|
-> | `id`      | Yes      | `integer` | userId |
+> | `id`      | Yes      | `integer` | ID of the user to retrieve |
 
 ##### Responses
 
@@ -201,7 +201,7 @@ There is no authentication because **not implemented**. All endpoints are open.
 
 > | Parameter | Required | Data Type | Description        |
 > |-----------|----------|-----------|--------------------|
-> | `id`      | Yes      | `integer` | userId |
+> | `id`      | Yes      | `integer` | ID of the user to delete |
 
 ##### Responses
 
@@ -220,3 +220,115 @@ There is no authentication because **not implemented**. All endpoints are open.
 > ```
 
 </details>
+
+---
+
+---
+
+### Associations (`/associations`)
+
+These endpoints manage the association between users and groups.
+
+<details>
+ <summary><code>POST</code> <code><b>/associations</b></code> <code>(Create Association between User and Group)</code></summary>
+
+##### Request Body
+
+> Requires a JSON request body specifying the userId and groupId.
+
+> | Field     | Required | Data Type | Description              | Example |
+> |-----------|----------|-----------|--------------------------|---------|
+> | `userId`  | Yes      | `integer` | ID of user. | `1`   |
+> | `groupId` | Yes      | `integer` | ID of group.| `1`    |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                                         | Description                                             |
+> |-----------|-----------------------------|-------------------------------------------------------------------------------|---------------------------------------------------------|
+> | `201`     | `application/json`          | `{"status":"success", "message":"Association created between userId: 123 and groupId: 1"}`             | Association created.                              |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"...", "params": [...]}`|  Invalid params.     |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"UserId: ... not found!"}` | userId does not exist.            |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"GroupId: ... not found!"}`| groupId does not exist.           |
+> | `409`     | `application/json`          | `{"status":"error", "code":"ER_DUP_ENTRY", "message":"Association name already exists!!"}`     | Association already existed.                   |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                | Internal server error.               |
+
+##### Example cURL
+
+> Association between userId 1 with groupId 1:
+> ```bash
+> curl -X POST \
+>   -H "Content-Type: application/json" \
+>   -d '{"userId": 1, "groupId": 1}' \
+>   http://localhost:3000/api/v1/associations
+> ```
+
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>/associations</b></code> <code>(List Users/Groups)</code></summary>
+
+##### Query Parameters
+
+> **Note:** Provide **EITHER** `userId` **OR** `groupId`, but **NOT BOTH**.
+
+> | Parameter | Required | Data Type | Description                                      | Example |
+> |-----------|----------|-----------|--------------------------------------------------|---------|
+> | `userId`  | Conditional | `integer` | Get the groups of a specific user is part of. | `1`   |
+> | `groupId` | Conditional | `integer` | Get users in a specific group. | `1`    |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                          | Description                                                       |
+> |-----------|-----------------------------|----------------------------------------------------------------|-------------------------------------------------------------------|
+> | `200`     | `application/json`          | `{status: "success", groups}`         | Success if query is done by `userId` and returns list of Group objects. |
+> | `200`     | `application/json`          | `{status: "success", users}`        | Success if query is done by `groupId` and  returns list of User objects.  |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}` | Missing query param, both provided or invalid params format.       |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"..."}`      | UserId or GroupId not found.     |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}` | Internal server error |
+
+##### Example cURL
+
+> Get groups for userId 1:
+> ```bash
+> curl -X GET -i "http://localhost:3000/api/v1/associations?userId=1"
+> ```
+> Get users for groupId 1:
+> ```bash
+> curl -X GET -i "http://localhost:3000/api/v1/associations?groupId=1"
+> ```
+
+</details>
+
+<details>
+ <summary><code>DELETE</code> <code><b>/associations</b></code> <code>(Delete Association User from Group)</code></summary>
+
+##### Query Parameters
+
+> **Note:** Requires **BOTH** `userId` **AND** `groupId`.
+
+> | Parameter | Required | Data Type | Description                           | Example |
+> |-----------|----------|-----------|---------------------------------------|---------|
+> | `userId`  | Yes      | `integer` | ID of the user in the association.  | `1`   |
+> | `groupId` | Yes      | `integer` | ID of the group in the association. | `1`    |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                                              | Description                          |
+> |-----------|-----------------------------|------------------------------------------------------------------------------------|--------------------------------------|
+> | `200`     | `application/json`          | `{"status":"success", "message":"The userId: ... is removed from groupId: ..."}` | Association deleted.         |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}`                     | Missing or invalid query parameters. |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"Association... not found."}`   | The association does not exist. |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                     | Internal server error.         |
+
+##### Example cURL
+
+> Remove userId: 1 from groupId: 1:
+> ```bash
+> curl -X DELETE -i "http://localhost:3000/api/v1/associations?userId=1&groupId=1"
+> ```
+
+</details>
+
+
+
+---
