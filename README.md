@@ -49,39 +49,174 @@ This implementation uses raw SQL queries via the `mysql2` library (without ORM) 
 
 ## API Documentation
 
-#### Users (`/api/v1/users`)
+### Base URL
+
+All API endpoints are prefixed with `/api/v1`. This is an example: `http://localhost:3000/api/v1/users`
+
+### Authentication
+
+There is no authentication because **not implemented**. All endpoints are open.
+
+---
+
+### Users (`/users`)
 
 <details>
-  <summary><code>POST</code> <code><b>/api/v1/users</b></code></summary>
+ <summary><code>POST</code> <code><b>/users</b></code> <code>(Create New User)</code></summary>
 
-Requires a JSON body with user details to create a new user.
+##### Request Body
 
-##### Request Body Parameters
+> Requires a JSON request body with user details.
 
-| Name        | Type     | Data Type             | Description                                     |
-|-------------|----------|-----------------------|-------------------------------------------------|
-| `name`      | Required | string                | User's first name                               |
-| `surname`   | Required | string                | User's last name                                |
-| `birth_date`| Required | string (`YYYY-MM-DD`) | User's date of birth                             |
-| `sex`       | Required | string (`'male'` &#124; `'female'` &#124; `'other'`) | User's sex (allowed values: 'male', 'female', 'other') |
+> | Field        | Required | Data Type                  | Description                                | Example          |
+> |--------------|----------|----------------------------|--------------------------------------------|------------------|
+> | `name`       | Yes      | `string`                   | User's first name  | `"Fatima"`        |
+> | `surname`    | Yes      | `string`                   | User's last name   | `"Hanna"`        |
+> | `birth_date` | Yes      | `string` (YYYY-MM-DD)      | User's date of birth                     | `"2000-01-01"`   |
+> | `sex`        | Yes      | `string` ('male'\|'female'\|'other') | User's sex                               | `"female"`       |
 
 ##### Responses
 
-| HTTP Code | Content-Type     | Response                                                                 |
-|-----------|------------------|--------------------------------------------------------------------------|
-| `201`     | `application/json` | `{"message": "User created successfully", "userId": 123}`                 |
-| `400`     | `application/json` | `{"status": "error", "code": "INVALID_USER_PARAMS", "message": "..."}` |
-| `409`     | `application/json` | `{"status": "error", "code": "ER_DUP_ENTRY", "message": "... already exists."}` |
-| `500`     | `application/json` | `{"status": "error", "code": "INTERNAL_SERVER_ERROR", "message": "..."}` |
+> | HTTP Code | Content-Type                | Response Body Example                                                          | Description                    |
+> |-----------|-----------------------------|--------------------------------------------------------------------------------|--------------------------------|
+> | `201`     | `application/json`          | `{status":"success", "message":"User created successfully!", "userId": 123}`                       | User created.     |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}` | Invalid input.                  |
+> | `409`     | `application/json`          | `{"status":"error", "code":"ER_DUP_ENTRY", "message":"...already exists!"}`        | Duplicate user.  |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                 | Internal server error.  |
 
-##### Example cURL Request
+##### Example cURL
 
-```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"name":"nameTest","surname":"surnameTest","birth_date":"1988-02-15","sex":"male"}' \
-  http://localhost:3000/api/v1/users
-```
-  *  **`POST /api/v1/associations`:**
-        *   Description: Creates a new user. Requires `name`, `surname`, `birth_date (YYYY-MM-DD)`, `sex ('male'|'female'|'other')`. <br> Checks for uniqueness based on this combination.
-        *   You can check the root endpoint: e.g. `curl http://localhost:3000/api/v1`.
+> ```bash
+> curl -X POST \
+>   -H "Content-Type: application/json" \
+>   -d '{"name":"Fatima","surname":"Hanna","birth_date":"2000-01-01","sex":"female"}' \
+>   http://localhost:3000/api/v1/users
+> ```
+
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>/users</b></code> <code>(List Users - Paginated)</code></summary>
+
+##### Query Parameters
+
+> | Parameter | Required | Data Type | Default | Max | Description                       | Example        |
+> |-----------|----------|-----------|---------|-----|-----------------------------------|----------------|
+> | `page`    | No       | `integer` | 1       | N/A | Page number to retrieve. | `2`            |
+> | `limit`   | No       | `integer` | 10      | 100 | Number of users per page. | `20`           |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                                                          | Description                             |
+> |-----------|-----------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------|
+> | `200`     | `application/json`          | `{"status":"success", "data":[user...], "pagination":{ "totalItems": ..., "totalPages":.., "currentPage":..., "pageSize": ...}}` |  List of users with pagination |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                                  | Internal server error.          |
+
+##### Example cURL
+
+> Get page 2 with 5 users per page:
+> ```bash
+> curl -X GET -i "http://localhost:3000/api/v1/users?page=2&limit=5"
+> ```
+> Get first page (as default defined):
+> ```bash
+> curl -X GET -i "http://localhost:3000/api/v1/users"
+> ```
+
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>/users/{id}</b></code> <code>(Get User by ID)</code></summary>
+
+##### Path Parameters
+
+> | Parameter | Required | Data Type | Description        |
+> |-----------|----------|-----------|--------------------|
+> | `id`      | Yes      | `integer` | userId |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                          | Description                          |
+> |-----------|-----------------------------|----------------------------------------------------------------|--------------------------------------|
+> | `200`     | `application/json`          | `{ id: 1, name: "Test", surname: "User", ... }`                | User found.             |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}` | Invalid userId format    |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"..."}`      | userId not found. |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}` | Internal server error.       |
+
+##### Example cURL
+
+> Get user with userId `1`:
+> ```bash
+> curl -X GET -i "http://localhost:3000/api/v1/users/1"
+> ```
+
+</details>
+
+<details>
+ <summary><code>PUT</code> <code><b>/users/{id}</b></code> <code>(Update User)</code></summary>
+
+##### Path Parameters
+
+> | Parameter | Required | Data Type | Description        |
+> |-----------|----------|-----------|--------------------|
+> | `id`      | Yes      | `integer` | ID of the user to update. |
+
+##### Request Body
+
+> Requires a JSON request body containing **at least one** field to update.
+
+> | Field        | Required | Data Type                  | Description                                | Example          |
+> |--------------|----------|----------------------------|--------------------------------------------|------------------|
+> | `name`       | No       | `string`                   | User's first name  | `"Fatima"`       |
+> | `surname`    | No       | `string`                   | User's last name   | `"Hanna"`        |
+> | `birth_date` | No       | `string` (YYYY-MM-DD)      | User's date of birth                     | `"2001-01-01"`   |
+> | `sex`        | No       | `string` ('male'\|'female'\|'other') | User's sex                               | `"female"`       |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                                            | Description                                      |
+> |-----------|-----------------------------|----------------------------------------------------------------------------------|--------------------------------------------------|
+> | `200`     | `application/json`          | `{"status":"success", "message":"User updated successfully!", "user": userObject}`         | User updated successfully.                       |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."`   | Invalid body data. |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"..."}`                        | userId not found.       |
+> | `409`     | `application/json`          | `{"status":"error", "code":"ER_DUP_ENTRY", "message":"...already exists!"}`          | Update caused a conflict with the unique constraint. |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                   |Internal server error.                      |
+
+##### Example cURL
+
+> Update only the name for userId `1`:
+> ```bash
+> curl -X PUT \
+>   -H "Content-Type: application/json" \
+>   -d '{"birth_date": "2000-01-01"}' \
+>   http://localhost:3000/api/v1/users/1
+> ```
+
+</details>
+
+<details>
+ <summary><code>DELETE</code> <code><b>/users/{id}</b></code> <code>(Delete User)</code></summary>
+
+##### Path Parameters
+
+> | Parameter | Required | Data Type | Description        |
+> |-----------|----------|-----------|--------------------|
+> | `id`      | Yes      | `integer` | userId |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example | Description                          |
+> |-----------|-----------------------------|-----------------------|--------------------------------------|
+> | `204`     | (No Content)                | (Empty)               |                                         |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}` | Invalid userId format   |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"..."}`      | userId not found. |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}` | Internal server error.        |
+
+##### Example cURL
+
+> Delete user with ID 1:
+> ```bash
+> curl -X DELETE -i "http://localhost:3000/api/v1/users/1"
+> ```
+
+</details>
