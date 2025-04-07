@@ -302,31 +302,184 @@ These endpoints manage the association between users and groups.
 
 ##### Query Parameters
 
-> **Note:** Requires **BOTH** `userId` **AND** `groupId`.
+> **Note:** Requires `userId`.
 
 > | Parameter | Required | Data Type | Description                           | Example |
 > |-----------|----------|-----------|---------------------------------------|---------|
-> | `userId`  | Yes      | `integer` | ID of the user in the association.  | `1`   |
-> | `groupId` | Yes      | `integer` | ID of the group in the association. | `1`    |
+> | `userId`  | Yes      | `integer` | ID of the user in the association.    | `1`   |
 
 ##### Responses
 
 > | HTTP Code | Content-Type                | Response Body Example                                                              | Description                          |
 > |-----------|-----------------------------|------------------------------------------------------------------------------------|--------------------------------------|
-> | `200`     | `application/json`          | `{"status":"success", "message":"The userId: ... is removed from groupId: ..."}` | Association deleted.         |
-> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}`                     | Missing or invalid query parameters. |
+> | `200`     | `application/json`          | `{"status":"success", "message":"The userId: ... is removed from group!"}` | Association deleted.         |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}`                     | Missing or invalid query param. |
 > | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"Association... not found."}`   | The association does not exist. |
 > | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                     | Internal server error.         |
 
 ##### Example cURL
 
-> Remove userId: 1 from groupId: 1:
+> Remove userId: 1:
 > ```bash
-> curl -X DELETE -i "http://localhost:3000/api/v1/associations?userId=1&groupId=1"
+> curl -X DELETE -i "http://localhost:3000/api/v1/associations?userId=1"
 > ```
 
 </details>
 
-
-
 ---
+
+### Groups (`/groups`)
+
+<details>
+ <summary><code>POST</code> <code><b>/groups</b></code> <code>(Create New Group)</code></summary>
+
+##### Request Body
+
+> Requires a JSON request body with group details.
+
+> | Field        | Required | Data Type                  | Description                                | Example          |
+> |--------------|----------|----------------------------|--------------------------------------------|------------------|
+> | `name`       | Yes      | `string`                   | Group's name  | `"Gli Invincibili"`        |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                                          | Description                    |
+> |-----------|-----------------------------|--------------------------------------------------------------------------------|--------------------------------|
+> | `201`     | `application/json`          | `{status":"success", "message":"Group created successfully!", "groupId": 1}`                       | User created.     |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}` | Invalid input.                  |
+> | `409`     | `application/json`          | `{"status":"error", "code":"ER_DUP_ENTRY", "message":"...already exists!"}`        | Duplicate user.  |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                 | Internal server error.  |
+
+##### Example cURL
+
+> ```bash
+> curl -X POST \
+>   -H "Content-Type: application/json" \
+>   -d '{"name":"Gli Invincibili"}' \
+>   http://localhost:3000/api/v1/groups
+> ```
+
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>/groups</b></code> <code>(List Groups - Paginated)</code></summary>
+
+##### Query Parameters
+
+> | Parameter | Required | Data Type | Default | Max | Description                       | Example        |
+> |-----------|----------|-----------|---------|-----|-----------------------------------|----------------|
+> | `page`    | No       | `integer` | 1       | N/A | Page number to retrieve. | `2`            |
+> | `limit`   | No       | `integer` | 10      | 100 | Number of users per page. | `20`           |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                                                          | Description                             |
+> |-----------|-----------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------|
+> | `200`     | `application/json`          | `{"status":"success", "data":[group...], "pagination":{ "totalItems": ..., "totalPages":.., "currentPage":..., "pageSize": ...}}` |  List of groups with pagination |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                                  | Internal server error.          |
+
+##### Example cURL
+
+> Get page 2 with 5 groups per page:
+> ```bash
+> curl -X GET -i "http://localhost:3000/api/v1/groups?page=2&limit=5"
+> ```
+> Get first page (as default defined):
+> ```bash
+> curl -X GET -i "http://localhost:3000/api/v1/groups"
+> ```
+
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>/groups/{id}</b></code> <code>(Get Group by ID)</code></summary>
+
+##### Path Parameters
+
+> | Parameter | Required | Data Type | Description        |
+> |-----------|----------|-----------|--------------------|
+> | `id`      | Yes      | `integer` | ID of the group to retrieve |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                          | Description                          |
+> |-----------|-----------------------------|----------------------------------------------------------------|--------------------------------------|
+> | `200`     | `application/json`          | `{ id: 1, name: "Gli Invincibili", ... }`                      | Group found.             |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}` | Invalid groupId format    |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"..."}`      | groupId not found. |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}` | Internal server error.       |
+
+##### Example cURL
+
+> Get user with groupId `1`:
+> ```bash
+> curl -X GET -i "http://localhost:3000/api/v1/groups/1"
+> ```
+
+</details>
+
+<details>
+ <summary><code>PUT</code> <code><b>/groups/{id}</b></code> <code>(Update Group)</code></summary>
+
+##### Path Parameters
+
+> | Parameter | Required | Data Type | Description        |
+> |-----------|----------|-----------|--------------------|
+> | `id`      | Yes      | `integer` | ID of the group to update. |
+
+##### Request Body
+
+> Requires a JSON request body containing **at least one** field to update.
+
+> | Field        | Required | Data Type                  | Description                                | Example          |
+> |--------------|----------|----------------------------|--------------------------------------------|------------------|
+> | `name`       | No       | `string`                   | Group's new name  | `"Gli Invincibili 2"`       |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example                                                            | Description                                      |
+> |-----------|-----------------------------|----------------------------------------------------------------------------------|--------------------------------------------------|
+> | `200`     | `application/json`          | `{"status":"success", "message":"Group updated successfully!", "group": groupObject}`         | Group updated successfully.                       |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."`   | Invalid body data. |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"..."}`                        | groupId not found.       |
+> | `409`     | `application/json`          | `{"status":"error", "code":"ER_DUP_ENTRY", "message":"...already exists!"}`          | Update caused a conflict with the unique constraint. |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}`                   |Internal server error.                      |
+
+##### Example cURL
+
+> Update only the name for groupId `1`:
+> ```bash
+> curl -X PUT \
+>   -H "Content-Type: application/json" \
+>   -d '{"name": "Gli Invincibili 2"}' \
+>   http://localhost:3000/api/v1/groups/1
+> ```
+
+</details>
+
+<details>
+ <summary><code>DELETE</code> <code><b>/groups/{id}</b></code> <code>(Delete Group)</code></summary>
+
+##### Path Parameters
+
+> | Parameter | Required | Data Type | Description        |
+> |-----------|----------|-----------|--------------------|
+> | `id`      | Yes      | `integer` | ID of the group to delete |
+
+##### Responses
+
+> | HTTP Code | Content-Type                | Response Body Example | Description                          |
+> |-----------|-----------------------------|-----------------------|--------------------------------------|
+> | `204`     | (No Content)                | (Empty)               |                                         |
+> | `400`     | `application/json`          | `{"status":"error", "code":"INVALID_PARAMS", "message":"..."}` | Invalid groupId format   |
+> | `404`     | `application/json`          | `{"status":"error", "code":"NOT_FOUND", "message":"..."}`      | groupId not found. |
+> | `500`     | `application/json`          | `{"status":"error", "code":"INTERNAL_ERROR", "message":"..."}` | Internal server error.        |
+
+##### Example cURL
+
+> Delete group with ID 1:
+> ```bash
+> curl -X DELETE -i "http://localhost:3000/api/v1/groups/1"
+> ```
+
+</details>
