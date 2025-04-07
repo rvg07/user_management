@@ -10,7 +10,7 @@ function getPaginatedData(query){
     const MAX_PAGE_SIZE = PAGINATION.MAX_PAGE_SIZE;
     const DEFAULT_PAGE_NUMBER = PAGINATION.DEFAULT_PAGE_NUMBER;
     const PAGE_NUMBER = typeof query.page !== typeof undefined ? query.page : DEFAULT_PAGE_NUMBER;
-    const PAGE_SIZE = typeof query.limit !== undefined ? query.limit : DEFAULT_PAGE_SIZE;
+    const PAGE_SIZE = typeof query.limit !== typeof undefined ? query.limit : DEFAULT_PAGE_SIZE;
 
     let pageNumber = parseInt(PAGE_NUMBER, 10);
     let pageSize = parseInt(PAGE_SIZE, 10);
