@@ -223,8 +223,6 @@ There is no authentication because **not implemented**. All endpoints are open.
 
 ---
 
----
-
 ### Associations (`/associations`)
 
 These endpoints manage the association between users and groups.
