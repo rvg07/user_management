@@ -5,6 +5,9 @@ This implementation uses raw SQL queries via the `mysql2` library (without ORM) 
 
 ## Getting Started
 
+### Prerequisites
+*   [Docker](https://www.docker.com/get-started/)
+
 ### Installation
 
 1.  **Clone the Repository:**
